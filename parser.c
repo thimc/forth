@@ -50,9 +50,7 @@ void error(char *src, const char *fname, Token *token, const char *fmt, ...) {
 	src_line[i - line_start] = '\0';
 
     va_start(ap, fmt);
-	snprintf(location, ARRAY_LEN(location), "%s:%d:%d: %sERROR%s: ",
-		fname, line, column,
-		(color == 1) ? "\033[31m" : "", (color == 1) ? "\033[0m" : "");
+	snprintf(location, ARRAY_LEN(location), "%s:%d:%d: ERROR: ", fname, line, column);
 	fputs(location, stderr);
 	vfprintf(stderr, fmt, ap);
 	printf("\n%s\n", src_line);
@@ -121,8 +119,8 @@ int parse(Parser *parser) {
 			}
 			in_loop = 1;
 			size_t i = parser->i;
-			while (parser->tokens->items[parser->i].type != TOK_LOOP &&
-					parser->tokens->items[parser->i].type != TOK_PLUS_LOOP) {
+			while (parser->tokens->items[parser->i].type != TOK_LOOP) { // &&
+					/* parser->tokens->items[parser->i].type != TOK_PLUS_LOOP) { */
 				if (parser_eof(parser)) {
 					error(parser->src, parser->fname, tok, "expected '%s' or '%s' after '%s'",
 						token_string[TOK_LOOP], token_string[TOK_PLUS_LOOP], token_string[TOK_DO]);
@@ -153,7 +151,7 @@ int parse(Parser *parser) {
 			parser->i = i + 1;
 		} break;
 
-		case TOK_PLUS_LOOP:
+		/* case TOK_PLUS_LOOP: */
 		case TOK_LOOP: {
 			if (!in_loop) {
 			 	error(parser->src, parser->fname, tok, "expected '%s' before '%s'",

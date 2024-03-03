@@ -10,9 +10,13 @@
 #include "parser.h"
 #include "stack.h"
 #include "util.h"
+#include "eval.h"
+
+int verbose = 0;
 
 void run(const char *file_name, char *source_code) {
 	Tokens tokens = {0};
+	Words words = {0};
 	if (lex(source_code, &tokens)) goto cleanup;
 	Parser parser = {
 		.fname = file_name,
@@ -20,8 +24,9 @@ void run(const char *file_name, char *source_code) {
 		.tokens = &tokens,
 	};
 	if (parse(&parser)) goto cleanup;
+	if (eval(&tokens, &words)) goto cleanup;
 
-	dump_tokens(&tokens);
+	if (verbose) dump_tokens(&tokens);
 
 cleanup:
 	for (size_t i = 0; i < tokens.count; i++) {
@@ -43,7 +48,7 @@ char *read_file(const char *path) {
 	if (file_contents == NULL) goto error;
 	fread(file_contents, sizeof(file_contents), file_size, fp);
 	file_contents[file_size] = '\0';
-	fprintf(stderr, "%s: %zu bytes\n", path, file_size);
+	if (verbose) fprintf(stderr, "%s: %zu bytes\n", path, file_size);
 	fclose(fp);
 	return file_contents;
 
@@ -53,6 +58,7 @@ error:
 }
 
 void usage(const char *program) {
+	printf("STACK_POP() = %d\n", STACK_POP());
 	fprintf(stderr, "usage: %s <file>\n", program);
 	exit(1);
 }

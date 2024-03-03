@@ -6,9 +6,6 @@
 
 #define DA_INIT_SIZE 24
 
-static bool color = true;
-static int verbose = 0;
-
 char *shift_args(int *argc, char ***argv);
 void dump_tokens(Tokens *tokens);
 
