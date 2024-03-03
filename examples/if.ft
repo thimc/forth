@@ -1,0 +1,10 @@
+." Hello world!"
+: is-it-zero? 0 = if ." Yes!" else ." No!" then cr ;
+
+: test
+	10 0 do
+		i . ." Loop..."
+		i is-it-zero?
+	loop ;
+
+test

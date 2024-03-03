@@ -7,12 +7,20 @@
 #include <string.h>
 
 #include "lexer.h"
+#include "parser.h"
 #include "stack.h"
 #include "util.h"
 
-void run(char *src) {
+void run(const char *file_name, char *source_code) {
 	Tokens tokens = {0};
-	if (lex(src, &tokens)) goto cleanup;
+	if (lex(source_code, &tokens)) goto cleanup;
+	Parser parser = {
+		.fname = file_name,
+		.src = source_code,
+		.tokens = &tokens,
+	};
+	if (parse(&parser)) goto cleanup;
+
 	dump_tokens(&tokens);
 
 cleanup:
@@ -27,7 +35,7 @@ cleanup:
 
 char *read_file(const char *path) {
 	FILE *fp = fopen(path, "r");
-	if (fp == NULL) goto error;
+	if (fp == NULL) return NULL;
 	if (fseek(fp, 0, SEEK_END) < 0) goto error;
 	size_t file_size = ftell(fp);
 	if (fseek(fp, 0, SEEK_SET) < 0) goto error;
@@ -35,11 +43,12 @@ char *read_file(const char *path) {
 	if (file_contents == NULL) goto error;
 	fread(file_contents, sizeof(file_contents), file_size, fp);
 	file_contents[file_size] = '\0';
-	fclose(fp);
 	fprintf(stderr, "%s: %zu bytes\n", path, file_size);
+	fclose(fp);
 	return file_contents;
 
 error:
+	fclose(fp);
 	return NULL;
 }
 
@@ -53,13 +62,13 @@ int main(int argc, char *argv[]) {
 
 	if (argc < 1) usage(program);
 	const char *arg = shift_args(&argc, &argv);
-	char *program_contents = read_file(arg);
-	if (program == NULL) {
+	char *source_code = read_file(arg);
+	if (source_code == NULL) {
 		fprintf(stderr, "ERROR: could not read file: '%s'\n", arg);
 		return 1;
 	}
-	run(program_contents);
-	free(program_contents);
+	run(arg, source_code);
+	free(source_code);
 
 	return 0;
 }
