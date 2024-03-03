@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS += -std=c99 -Wall -Wextra -pedantic -pedantic-errors -ggdb -I.
+CFLAGS = -std=c99 -Wall -Wextra -pedantic -pedantic-errors -ggdb -I. -Wshadow
 
 SRCS = stack.c builtins.c eval.c parser.c lexer.c util.c forth.c
 OBJS = ${SRCS:.c=.o}
@@ -16,4 +16,3 @@ ${TARGET}: ${OBJS}
 clean:
 	rm -f ${OBJS} ${TARGET}
 
-.PHONY: clean

@@ -22,7 +22,6 @@ Token *peek_token(Parser *parser) {
 void error(char *src, const char *fname, Token *token, const char *fmt, ...) {
     va_list ap;
 	char location[64] = {0};
-
 	char *src_line = NULL;
 	int line = 0, column = 0;
 	size_t i = 0;
@@ -69,26 +68,26 @@ int parse(Parser *parser) {
 	char in_function = 0;
 	char in_do_loop = 0;
 	char in_begin_loop = 0;
-	Token *tok = NULL;
+	size_t i = 0;
 
 	while (parser-> i < parser->tokens->count) {
 		switch (parser->tokens->items[parser->i].type) {
 
 		case TOK_COLON: {
+			i = parser->i;
 			if (in_function) {
-				error(parser->src, parser->fname, tok, "cannot define functions recursively");
+				error(parser->src, parser->fname, &parser->tokens->items[i], "cannot define functions recursively");
 				return 1;
 			}
-			size_t i = parser->i;
 			if (peek_token(parser)->type != TOK_WORD) {
-				error(parser->src, parser->fname, tok, "expected '%s' after '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' after '%s'",
 					token_string[TOK_WORD], token_string[peek_token(parser)->type]);
 				return 1;
 			}
 			in_function = 1;
 			while (parser->tokens->items[parser->i].type != TOK_SEMICOLON) {
 				if (parser_eof(parser)) {
-					error(parser->src, parser->fname, tok, "expected '%s' after '%s'",
+					error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' after '%s'",
 						token_string[TOK_SEMICOLON], token_string[TOK_COLON]);
 					return 1;
 				}
@@ -100,8 +99,9 @@ int parse(Parser *parser) {
 		} break;
 
 		case TOK_SEMICOLON: {
+			i = parser->i;
 			if (CALL_STACK_EMPTY()) {
-				error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_COLON], token_string[TOK_SEMICOLON]);
 				return 1;
 			}
@@ -113,17 +113,17 @@ int parse(Parser *parser) {
 		}  break;
 
 		case TOK_DO: {
+			i = parser->i;
 			if (!in_function) {
-				error(parser->src, parser->fname, tok,
+				error(parser->src, parser->fname, &parser->tokens->items[i],
 					"loops are only permitted inside functions");
 				return 1;
 			}
 			in_do_loop = 1;
-			size_t i = parser->i;
 			while (parser->tokens->items[parser->i].type != TOK_LOOP &&
 					parser->tokens->items[parser->i].type != TOK_PLUS_LOOP) {
 				if (parser_eof(parser)) {
-					error(parser->src, parser->fname, tok, "expected '%s' or '%s' after '%s'",
+					error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' or '%s' after '%s'",
 						token_string[TOK_LOOP], token_string[TOK_PLUS_LOOP], token_string[TOK_DO]);
 					return 1;
 				}
@@ -135,14 +135,14 @@ int parse(Parser *parser) {
 		} break;
 
 		case TOK_ITERATOR: {
+			i = parser->i;
 			if (!in_do_loop) {
-				error(parser->src, parser->fname, tok,
+				error(parser->src, parser->fname, &parser->tokens->items[i],
 					"iterators are only permitted inside loops");
 				return 1;
 			}
-			size_t i = parser->i;
 			if (CALL_STACK_EMPTY()) {
-				error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_DO], token_string[TOK_ITERATOR]);
 				return 1;
 			}
@@ -154,14 +154,15 @@ int parse(Parser *parser) {
 
 		case TOK_PLUS_LOOP:
 		case TOK_LOOP: {
+			i = parser->i;
 			if (!in_do_loop) {
-			 	error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+			 	error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_DO], token_string[parser->tokens->items[parser->i].type]);
 			 	return 1;
 			}
 			in_do_loop = 0;
 			if (CALL_STACK_EMPTY()) {
-				error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_DO], token_string[parser->tokens->items[parser->i].type]);
 				return 1;
 			}
@@ -172,15 +173,15 @@ int parse(Parser *parser) {
 		} break;
 
 		case TOK_IF: {
+			i = parser->i;
 			if (!in_function) {
-				error(parser->src, parser->fname, tok,
+				error(parser->src, parser->fname, &parser->tokens->items[i],
 					"conditionals are only permitted inside functions");
 				return 1;
 			}
-			size_t i = parser->i;
 			while (parser->tokens->items[parser->i].type != TOK_THEN) {
 				if (parser_eof(parser)) {
-					error(parser->src, parser->fname, tok, "expected '%s' after '%s'",
+					error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' after '%s'",
 						token_string[TOK_THEN], token_string[TOK_IF]);
 					return 1;
 				}
@@ -193,20 +194,20 @@ int parse(Parser *parser) {
 		} break;
 
 		case TOK_ELSE: {
+			i = parser->i;
 			if (!in_function) {
-				error(parser->src, parser->fname, tok,
+				error(parser->src, parser->fname, &parser->tokens->items[i],
 					"conditionals are only permitted inside functions");
 				return 1;
 			}
 			if (CALL_STACK_EMPTY()) {
-				error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_IF], token_string[TOK_ELSE]);
 				return 1;
 			}
-			size_t i = parser->i;
 			while (parser->tokens->items[parser->i].type != TOK_THEN) {
 				if (parser_eof(parser)) {
-					error(parser->src, parser->fname, tok, "expected '%s' after '%s'",
+					error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' after '%s'",
 						token_string[TOK_THEN], token_string[TOK_ELSE]);
 					return 1;
 				}
@@ -221,13 +222,14 @@ int parse(Parser *parser) {
 		} break;
 
 		case TOK_THEN: {
+			i = parser->i;
 			if (!in_function) {
-				error(parser->src, parser->fname, tok,
+				error(parser->src, parser->fname, &parser->tokens->items[i],
 					"conditionals are only permitted inside functions");
 				return 1;
 			}
 			if (CALL_STACK_EMPTY()) {
-				error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_IF], token_string[TOK_THEN]);
 				return 1;
 			}
@@ -244,16 +246,16 @@ int parse(Parser *parser) {
 		} break;
 
 		case TOK_BEGIN: {
+			i = parser->i;
 			if (!in_function) {
-				error(parser->src, parser->fname, tok,
+				error(parser->src, parser->fname, &parser->tokens->items[i],
 					"loops are only permitted inside functions");
 				return 1;
 			}
 			in_begin_loop = 1;
-			size_t i = parser->i;
 			while (parser->tokens->items[parser->i].type != TOK_UNTIL) {
 				if (parser_eof(parser)) {
-					error(parser->src, parser->fname, tok, "expected '%s' after '%s'",
+					error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' after '%s'",
 						token_string[TOK_UNTIL], token_string[TOK_BEGIN]);
 					return 1;
 				}
@@ -265,14 +267,15 @@ int parse(Parser *parser) {
 		} break;
 
 		case TOK_UNTIL: {
+			i = parser->i;
 			if (!in_begin_loop) {
-				error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_BEGIN], token_string[parser->tokens->items[parser->i].type]);
 				return 1;
 			}
 			in_begin_loop = 0;
 			if (CALL_STACK_EMPTY()) {
-				error(parser->src, parser->fname, tok, "expected '%s' before '%s'",
+				error(parser->src, parser->fname, &parser->tokens->items[i], "expected '%s' before '%s'",
 					token_string[TOK_BEGIN], token_string[parser->tokens->items[parser->i].type]);
 				return 1;
 			}
