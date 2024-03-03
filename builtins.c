@@ -45,9 +45,9 @@ int builtin_rot(void) {
 	int a = STACK_POP();
 	int b = STACK_POP();
 	int c = STACK_POP();
-	STACK_PUSH(c);
 	STACK_PUSH(b);
 	STACK_PUSH(a);
+	STACK_PUSH(c);
 	return 0;
 }
 
@@ -85,7 +85,7 @@ int builtin_invert(void) {
 }
 
 int builtin_drop(void) {
-	(void)STACK_POP();
+	STACK[SP--] = 0;
 	return 0;
 }
 
