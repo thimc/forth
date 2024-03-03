@@ -1,0 +1,4 @@
+\ This example will fail because we're expected to
+\ end a word definition with a semi-colon.
+: a
+	1 1 + .
