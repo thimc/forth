@@ -58,8 +58,7 @@ error:
 }
 
 void usage(const char *program) {
-	printf("STACK_POP() = %d\n", STACK_POP());
-	fprintf(stderr, "usage: %s <file>\n", program);
+	fprintf(stderr, "usage: %s [-v] <file>\n", program);
 	exit(1);
 }
 
@@ -68,6 +67,12 @@ int main(int argc, char *argv[]) {
 
 	if (argc < 1) usage(program);
 	const char *arg = shift_args(&argc, &argv);
+
+	if (strcmp(arg, "-v") == 0) {
+		verbose = 1;
+		arg = shift_args(&argc, &argv);
+	}
+
 	char *source_code = read_file(arg);
 	if (source_code == NULL) {
 		fprintf(stderr, "ERROR: could not read file: '%s'\n", arg);
