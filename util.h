@@ -5,6 +5,7 @@
 
 #define DA_INIT_SIZE 24
 
+void to_lower(char *str);
 char *shift_args(int *argc, char ***argv);
 void dump_tokens(Tokens *tokens);
 

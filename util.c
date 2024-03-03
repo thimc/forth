@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,6 +7,11 @@
 
 #include "lexer.h"
 #include "util.h"
+
+void to_lower(char *str) {
+	for ( ; *str; ++str)
+		*str = tolower(*str);
+}
 
 char *shift_args(int *argc, char ***argv) {
     assert(*argc > 0);

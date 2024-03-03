@@ -133,6 +133,7 @@ int lex(char *src, Tokens *tokens) {
 			assert(tok.as.string != NULL);
 			memcpy(tok.as.string, src + start, end - start);
 			tok.as.string[end - start] = '\0';
+			to_lower(tok.as.string);
 
 			for (size_t kw = KEYWORD_START; kw < ARRAY_LEN(token_string); kw++) {
 				if (strcmp(token_string[kw], tok.as.string) == 0) {
