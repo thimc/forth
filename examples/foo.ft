@@ -1,0 +1,4 @@
+: foo  100 + ;
+1000 foo
+foo foo foo
+.
