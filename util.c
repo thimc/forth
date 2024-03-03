@@ -65,4 +65,3 @@ void dump_tokens(Tokens *tokens) {
 		fprintf(stderr, "\n");
 	}
 }
-

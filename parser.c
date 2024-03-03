@@ -249,4 +249,3 @@ int parse(Parser *parser) {
 	}
 	return 0;
 }
-

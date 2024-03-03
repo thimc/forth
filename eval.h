@@ -1,4 +1,3 @@
-// vim: ft=c
 #ifndef EVAL_H_
 #define EVAL_H_
 

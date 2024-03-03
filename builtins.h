@@ -1,4 +1,3 @@
-// vim: ft=c
 #ifndef BUILTINS_H_
 #define BUILTINS_H_
 
@@ -53,4 +52,4 @@ static const Builtin builtins[] = {
 	{ .name = "dump",   .fn = builtin_dump },
 };
 
-#endif // !BUILTINS_H_
+#endif // BUILTINS_H_

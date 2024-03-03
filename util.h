@@ -1,4 +1,3 @@
-// vim: ft=c
 #ifndef UTIL_H_
 #define UTIL_H_
 
