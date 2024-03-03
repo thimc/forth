@@ -25,13 +25,12 @@ void run(const char *file_name, char *source_code) {
 	};
 	if (parse(&parser)) goto cleanup;
 	if (eval(&tokens, &words)) goto cleanup;
-
 	if (verbose) dump_tokens(&tokens);
 
 cleanup:
 	for (size_t i = 0; i < tokens.count; i++) {
 		Token *tok = &tokens.items[i];
-		if (tok->type <= TOK_LSTRING) {
+		if (tok->type <= TOK_STRING) {
 			free(tokens.items[i].as.string);
 		}
 	}
@@ -48,7 +47,6 @@ char *read_file(const char *path) {
 	if (file_contents == NULL) goto error;
 	fread(file_contents, sizeof(file_contents), file_size, fp);
 	file_contents[file_size] = '\0';
-	if (verbose) fprintf(stderr, "%s: %zu bytes\n", path, file_size);
 	fclose(fp);
 	return file_contents;
 
@@ -68,7 +66,10 @@ int main(int argc, char *argv[]) {
 	if (argc < 1) usage(program);
 	const char *arg = shift_args(&argc, &argv);
 
-	if (strcmp(arg, "-v") == 0) {
+	if (strcmp(arg, "-vv") == 0) {
+		verbose = 2;
+		arg = shift_args(&argc, &argv);
+	} else if (strcmp(arg, "-v") == 0) {
 		verbose = 1;
 		arg = shift_args(&argc, &argv);
 	}

@@ -14,6 +14,8 @@ int lex(char *src, Tokens *tokens) {
 
 	while (i < src_len) {
 		while (i < src_len && isspace(src[i])) i++;
+		if (i >= src_len) break;
+
 		switch (src[i]) {
 
 		case '(': {
@@ -70,7 +72,7 @@ int lex(char *src, Tokens *tokens) {
 				size_t end = i - 1;
 				i++; // consume "
 				Token tok = {
-					.type = TOK_LSTRING,
+					.type = TOK_STRING,
 					.location = i,
 				};
 				tok.as.string = malloc(sizeof(tok.as.string) * end - start + 1);

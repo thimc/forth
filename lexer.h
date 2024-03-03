@@ -3,8 +3,7 @@
 
 typedef enum {
 	TOK_WORD,		// dup, swap, over ..
-	TOK_STRING,		// "this"
-	TOK_LSTRING,	// ." this"
+	TOK_STRING,		// ." this"
 	TOK_NUMBER,		// 1, 2, 3, 4 ...
 	TOK_COLON,		// : foo 100 + ;
 	TOK_SEMICOLON,
@@ -43,7 +42,7 @@ typedef struct {
 
 #define KEYWORD_START ((int)TOK_IF)
 static const char *token_string[] = {
-	"word", "string", "literate", "number", ":", ";",
+	"word", "literate", "number", ":", ";",
 	"if", "else", "then", "do", "i", "+loop", "loop", "begin", "until",
 	"constant", "variable", "get", "write", "add"
 };

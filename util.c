@@ -34,10 +34,12 @@ void dump_tokens(Tokens *tokens) {
 			fprintf(stderr, "%-20s %-8zu",
 				" ", tok->as.scope.start);
 			break;
+		case TOK_BEGIN:
 		case TOK_DO:
 			fprintf(stderr, "%-20s %-8s %-8s %-8zu",
 				" ", " ", " ", tok->as.scope.end);
 			break;
+		case TOK_UNTIL:
 		case TOK_LOOP:
 			fprintf(stderr, "%-20s %-8zu ",
 				" ", tok->as.scope.start);
@@ -56,7 +58,6 @@ void dump_tokens(Tokens *tokens) {
 				" ", tok->as.scope.start, " ", " ");
 			break;
 		case TOK_WORD:
-		case TOK_LSTRING:
 		case TOK_STRING:
 			fprintf(stderr, "%-20s ", tok->as.string);
 			break;

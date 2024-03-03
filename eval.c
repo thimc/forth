@@ -17,23 +17,6 @@ int eval(Tokens *tokens, Words *words) {
 	while (i < tokens->count) {
 		Token *tok = &tokens->items[i];
 
-		/* fprintf(stderr, "Evaluating #%zu (%s ", */
-		/* 	i, token_string[tokens->items[i].type]); */
-		/* if (tokens->items[i].type <= TOK_LSTRING) */
-		/* 	fprintf(stderr, "%s)\t", tokens->items[i].as.string); */
-		/* else if (tokens->items[i].type == TOK_NUMBER) */
-		/* 	fprintf(stderr, "%d)\t", tokens->items[i].as.number); */
-		/* else */
-		/* 	fprintf(stderr, ")\t"); */
-
-		/* fprintf(stderr, "\t SP = %d , peek %-4d", SP, STACK[SP]); */
-		/* fprintf(stderr, "\tCSP = %d , peek %-4d", CSP, CALL_STACK[CSP]); */
-		/* fprintf(stderr, "\tISP = %d , peek %-4d\n", ISP, ITERATOR_STACK[ISP]); */
-		/* for (int s = 0; s < SP; s++) { */
-		/* 	fprintf(stderr, "%d ", STACK[s]); */
-		/* } */
-		/* fprintf(stderr, "\n\n"); */
-
 		switch (tok->type) {
 		case TOK_WORD: {
 			char matched = 0;
@@ -66,7 +49,7 @@ int eval(Tokens *tokens, Words *words) {
 			i++;
 		} break;
 
-		case TOK_LSTRING: {
+		case TOK_STRING: {
 			printf("%s", tok->as.string);
 			i++;
 		} break;
@@ -135,6 +118,21 @@ int eval(Tokens *tokens, Words *words) {
 				continue;
 			}
 			i++;
+		} break;
+
+		case TOK_BEGIN: {
+			i++;
+		} break;
+
+		case TOK_UNTIL: {
+			STACK_POP();
+			int val = STACK_POP();
+			if (TRUTHY(val) < 0) {
+				STACK_PUSH(val);
+				i = tok->as.scope.start;
+			} else {
+				i++;
+			}
 		} break;
 
 		default: {
