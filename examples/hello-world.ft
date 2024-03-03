@@ -1,3 +1,1 @@
-: h ." Hello" ;
-: w ." , World!" ;
-h w cr
+." Hello world!" cr
