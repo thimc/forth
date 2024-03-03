@@ -1,0 +1,2 @@
+." Pushing 12 to the stack and executing over " cr
+." Output: " 1 2 over . . . cr

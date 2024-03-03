@@ -1,0 +1,6 @@
+: my-loop ( n n -- )
+	do
+		i . cr
+	loop ;
+
+10 0 my-loop
