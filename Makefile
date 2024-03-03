@@ -1,13 +1,19 @@
-NAME = forth
 CC = cc
-CFLAGS = -std=c99 -Wall -Wextra -pedantic -pedantic-errors -ggdb -I.
-LDFLAGS +=
-SRC = $(NAME).c util.c lexer.c parser.c eval.c builtins.c stack.c
+CFLAGS += -std=c99 -Wall -Wextra -pedantic -pedantic-errors -ggdb -I.
 
-forth: $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o $(NAME) $(LDFLAGS)
+SRCS = stack.c builtins.c eval.c parser.c lexer.c util.c forth.c
+OBJS = ${SRCS:.c=.o}
+TARGET = forth
+
+all: ${TARGET}
+
+${TARGET}: ${OBJS}
+	${CC} ${CFLAGS} ${OBJS} -o ${TARGET}
+
+.c.o:
+	${CC} ${CFLAGS} -c $<
 
 clean:
-	rm $(NAME)
+	rm -f ${OBJS} ${TARGET}
 
-.PHONY: $(NAME) clean
+.PHONY: clean
