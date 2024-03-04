@@ -12,6 +12,9 @@
 #include "util.h"
 #include "eval.h"
 
+int STACK[STACK_SIZE] = {0};
+int SP = 0, CSP = 0, ISP = 0;
+
 int verbose = 0;
 
 void run(const char *file_name, char *source_code) {
@@ -24,8 +27,8 @@ void run(const char *file_name, char *source_code) {
 		.tokens = &tokens,
 	};
 	if (parse(&parser)) goto cleanup;
-	if (eval(&tokens, &words)) goto cleanup;
 	if (verbose) dump_tokens(&tokens);
+	if (eval(&tokens, &words)) goto cleanup;
 
 cleanup:
 	for (size_t i = 0; i < tokens.count; i++) {

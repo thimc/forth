@@ -127,7 +127,7 @@ int eval(Tokens *tokens, Words *words) {
 		case TOK_UNTIL: {
 			STACK_POP();
 			int val = STACK_POP();
-			if (TRUTHY(val) < 0) {
+			if (TRUTHY(val) == TRUE) {
 				STACK_PUSH(val);
 				i = tok->as.scope.start;
 			} else {
