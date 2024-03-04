@@ -88,32 +88,23 @@ int eval(Tokens *tokens, Words *words) {
 		} break;
 
 		case TOK_DO: {
-			int start = STACK_POP();
-			int end = STACK_POP();
-			if (start + 1 >= end) {
+			tok->as.scope.start = STACK_POP();
+			tok->as.scope.middle = STACK_POP();
+			if (tok->as.scope.start > tok->as.scope.middle) {
 				i = tok->as.scope.end + 1;
 				continue;
 			}
-			ITERATOR_STACK_PUSH(end);
-			ITERATOR_STACK_PUSH(start);
 			i++;
 		} break;
 
 		case TOK_ITERATOR: {
-			int start = ITERATOR_STACK_POP();
-			int end = ITERATOR_STACK_POP();
-			STACK_PUSH(start);
-			ITERATOR_STACK_PUSH(end);
-			ITERATOR_STACK_PUSH(start);
+			STACK_PUSH(tokens->items[tok->as.scope.start].as.scope.start);
 			i++;
 		} break;
 
 		case TOK_LOOP: {
-			int start = ITERATOR_STACK_POP() + 1;
-			int end = ITERATOR_STACK_POP();
-			if (start < end) {
-				ITERATOR_STACK_PUSH(end);
-				ITERATOR_STACK_PUSH(start);
+			tokens->items[tok->as.scope.start].as.scope.start++;
+			if (tokens->items[tok->as.scope.start].as.scope.start < tokens->items[tok->as.scope.start].as.scope.middle) {
 				i = tok->as.scope.start + 1;
 				continue;
 			}
