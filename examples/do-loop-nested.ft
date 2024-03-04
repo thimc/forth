@@ -1,0 +1,10 @@
+: nested-do-loops ( -- )
+	10 0 do
+		i dup
+		." Outer loop " . CR
+		dup 2 + swap do
+			." 	Inner loop " i . CR
+		loop
+	loop ;
+nested-do-loops
+
