@@ -138,7 +138,7 @@ int builtin_greater(void) {
 	return 0;
 }
 
-int builtin_dump(void) {
+int builtin_stacktrace(void) {
 	putchar('\t');
 	for (int s = 0; s < SP; s++) {
 		printf("%d ", STACK[s]);

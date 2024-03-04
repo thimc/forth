@@ -20,7 +20,7 @@ int builtin_div(void);
 int builtin_equals(void);
 int builtin_less(void);
 int builtin_greater(void);
-int builtin_dump(void);
+int builtin_stacktrace(void);
 
 typedef struct {
 	const char *name;
@@ -49,7 +49,7 @@ static const Builtin builtins[] = {
 	{ .name = "<",      .fn = builtin_less },
 	{ .name = ">",      .fn = builtin_greater },
 
-	{ .name = "dump",   .fn = builtin_dump },
+	{ .name = ".s",     .fn = builtin_stacktrace },
 };
 
 #endif // BUILTINS_H_
