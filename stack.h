@@ -20,7 +20,7 @@
 #define CALL_STACK_POP()     (STACK[--CSP + CALL_STACK_OFFSET])
 #define CALL_STACK_EMPTY()   (CSP <= 0)
 
-extern int SP, CSP, ISP;
+extern int SP, CSP;
 extern int STACK[STACK_SIZE];
 
 #endif // STACK_H_

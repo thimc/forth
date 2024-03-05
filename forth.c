@@ -13,7 +13,7 @@
 #include "eval.h"
 
 int STACK[STACK_SIZE] = {0};
-int SP = 0, CSP = 0, ISP = 0;
+int SP = 0, CSP = 0;
 
 int verbose = 0;
 
