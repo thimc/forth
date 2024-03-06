@@ -5,8 +5,6 @@ SRCS = builtins.c eval.c parser.c lexer.c util.c forth.c
 OBJS = ${SRCS:.c=.o}
 TARGET = forth
 
-all: ${TARGET}
-
 ${TARGET}: ${OBJS}
 	${CC} ${CFLAGS} ${OBJS} -o ${TARGET}
 
