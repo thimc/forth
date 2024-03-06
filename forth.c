@@ -32,12 +32,15 @@ void run(const char *file_name, char *source_code) {
 
 cleanup:
 	for (size_t i = 0; i < tokens.count; i++) {
-		Token *tok = &tokens.items[i];
-		if (tok->type <= TOK_STRING) {
+		if (tokens.items[i].type <= TOK_STRING) {
 			free(tokens.items[i].as.string);
 		}
 	}
-	if (tokens.items) da_free(tokens);
+	for (size_t i = 0; i < words.count; i++) {
+		free(words.items[i].name);
+	}
+	da_free(words);
+	da_free(tokens);
 }
 
 char *read_file(const char *path) {
