@@ -103,8 +103,9 @@ int eval(Tokens *tokens, Words *words) {
 		} break;
 
 		case TOK_LOOP: {
-			tokens->items[tok->as.scope.start].as.scope.start++;
-			if (tokens->items[tok->as.scope.start].as.scope.start < tokens->items[tok->as.scope.start].as.scope.middle) {
+			Token *if_token = &tokens->items[tok->as.scope.start];
+			if_token->as.scope.start++;
+			if (if_token->as.scope.start < if_token->as.scope.middle) {
 				i = tok->as.scope.start + 1;
 				continue;
 			}
