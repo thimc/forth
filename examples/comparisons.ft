@@ -1,0 +1,25 @@
+0 0 = .			." 	expect: -1"		cr
+0 1 = .			." 	expect: 0"		cr
+1 0 = .			." 	expect: 0"		cr
+1 1 = .			." 	expect: -1"		cr
+cr
+
+3 4 < .			." 	expect : -1"	cr
+3 4 > .			." 	expect : 0"		cr
+cr
+
+3 4 < invert . 	." 	expect : 0"		cr
+3 4 > invert . 	." 	expect : -1"	cr
+cr
+
+0 0 or .		." 	expect: 0"		cr
+0 1 or .		." 	expect: 1"		cr
+1 0 or .		." 	expect: 1"		cr
+1 1 or .		." 	expect: 1"		cr
+cr
+
+0 0 and .		." 	expect: 0"		cr
+0 1 and .		." 	expect: 0"		cr
+1 0 and .		." 	expect: 0"		cr
+1 1 and .		." 	expect: 1"		cr
+cr
