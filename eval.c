@@ -44,15 +44,13 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 						Variable *var = &variables->items[n];
 						if (var->type == VAR_CONSTANT) {
 							STACK_PUSH(var->as.value);
-						} else if (var->type == VAR_VARIABLE)
+						} else if (var->type == VAR_VARIABLE) {
 							STACK_PUSH(n);
-						else if (var->type == VAR_ARRAY) {
-							assert(0 && "Not implemented");
 						}
-						matched = 1;
-						i++;
-						break;
 					}
+					matched = 1;
+					i++;
+					break;
 				}
 			}
 
@@ -186,7 +184,6 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 				Variable *var = &variables->items[addr];
 				switch (var->type) {
 				case VAR_VARIABLE: var->as.value = val; break;
-				case VAR_ARRAY: assert(0 && "Not implemented"); break;
 				default: break;
 				}
 			}
@@ -200,7 +197,6 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 				Variable *var = &variables->items[addr];
 				switch (var->type) {
 				case VAR_VARIABLE: var->as.value += val; break;
-				case VAR_ARRAY: assert(0 && "Not implemented"); break;
 				default: break;
 				}
 			}
@@ -208,7 +204,6 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 		} break;
 
 		case TOK_CELLS: {
-			// TODO: Cells is ignored
 			i++;
 		} break;
 

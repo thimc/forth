@@ -21,7 +21,14 @@ typedef enum {
 	TOK_VAR_GET,	// variable @
 	TOK_VAR_WRITE,	// 123 variable !
 	TOK_VAR_ADD,	// 123 variable +!
+	TOK_CELLS,
+	TOK_ALLOT,		// variable x 3 cells allot
 } TokenType;
+
+typedef enum {
+	VAR_VARIABLE,
+	VAR_CONSTANT,
+} VariableType;
 
 typedef struct {
     TokenType type;
@@ -45,6 +52,8 @@ static const char *token_string[] = {
 	"word", "literate", "number", ":", ";",
 	"if", "else", "then", "do", "i", "+loop", "loop", "begin", "until",
 	"constant", "variable", "get", "write", "add"
+};
+
 static const char *variable_type[]  = {
 	"variable", "constant", "array",
 };

@@ -11,7 +11,6 @@ typedef struct {
 	size_t count, capacity;
 } Words;
 
-int eval(Tokens *tokens, Words *words);
 typedef struct {
 	VariableType type;
 	char *name;
