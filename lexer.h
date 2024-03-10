@@ -45,6 +45,8 @@ static const char *token_string[] = {
 	"word", "literate", "number", ":", ";",
 	"if", "else", "then", "do", "i", "+loop", "loop", "begin", "until",
 	"constant", "variable", "get", "write", "add"
+static const char *variable_type[]  = {
+	"variable", "constant", "array",
 };
 
 int lex(char *src, Tokens *tokens);

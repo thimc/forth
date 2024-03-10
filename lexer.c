@@ -58,6 +58,24 @@ int lex(char *src, Tokens *tokens) {
 			i++;
 		} break;
 
+		case '@': {
+			Token tok = {
+				.type = TOK_VAR_GET,
+				.location = i,
+			};
+			da_append(tokens, tok);
+			i++;
+		} break;
+
+		case '!': {
+			Token tok = {
+				.type = TOK_VAR_WRITE,
+				.location = i,
+			};
+			da_append(tokens, tok);
+			i++;
+		} break;
+
 		case '.': {
 			if (src[i+1] == '\"') {
 				i++; // consume .
@@ -141,6 +159,8 @@ int lex(char *src, Tokens *tokens) {
 					break;
 				}
 			}
+
+			if (strcmp(tok.as.string, "+!") == 0) tok.type = TOK_VAR_ADD;
 
 			da_append(tokens, tok);
 			break;

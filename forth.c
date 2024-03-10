@@ -12,14 +12,15 @@
 #include "util.h"
 #include "eval.h"
 
+Tokens tokens = {0};
+Words words = {0};
+Variables variables = {0};
 int STACK[STACK_SIZE] = {0};
 int SP = 0, CSP = 0;
 
 int verbose = 0;
 
 void run(const char *file_name, char *source_code) {
-	Tokens tokens = {0};
-	Words words = {0};
 	if (lex(source_code, &tokens)) goto cleanup;
 	Parser parser = {
 		.fname = file_name,
@@ -28,7 +29,7 @@ void run(const char *file_name, char *source_code) {
 	};
 	if (parse(&parser)) goto cleanup;
 	if (verbose) dump_tokens(&tokens);
-	if (eval(&tokens, &words)) goto cleanup;
+	if (eval(&tokens, &words, &variables)) goto cleanup;
 
 cleanup:
 	for (size_t i = 0; i < tokens.count; i++) {
@@ -39,6 +40,10 @@ cleanup:
 	for (size_t i = 0; i < words.count; i++) {
 		free(words.items[i].name);
 	}
+	for (size_t i = 0; i < variables.count; i++) {
+		free(variables.items[i].name);
+	}
+	da_free(variables);
 	da_free(words);
 	da_free(tokens);
 }

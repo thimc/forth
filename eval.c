@@ -11,7 +11,7 @@
 #include "eval.h"
 #include "builtins.h"
 
-int eval(Tokens *tokens, Words *words) {
+int eval(Tokens *tokens, Words *words, Variables *variables) {
 	size_t i = 0;
 
 	while (i < tokens->count) {
@@ -38,6 +38,24 @@ int eval(Tokens *tokens, Words *words) {
 					}
 				}
 			}
+			if (!matched) {
+				for (size_t n = 0; n < variables->count; n++) {
+					if (strcmp(variables->items[n].name, tok->as.string) == 0) {
+						Variable *var = &variables->items[n];
+						if (var->type == VAR_CONSTANT) {
+							STACK_PUSH(var->as.value);
+						} else if (var->type == VAR_VARIABLE)
+							STACK_PUSH(n);
+						else if (var->type == VAR_ARRAY) {
+							assert(0 && "Not implemented");
+						}
+						matched = 1;
+						i++;
+						break;
+					}
+				}
+			}
+
 			if (!matched) {
 				printf("Unknown word: '%s' at index %zu\n", tok->as.string, i);
 				return 1;
@@ -127,8 +145,79 @@ int eval(Tokens *tokens, Words *words) {
 			}
 		} break;
 
+		case TOK_CONSTANT: {
+			int val = STACK_POP();
+			Token *name = &tokens->items[i + 1];
+			Variable var = {
+				.type = VAR_CONSTANT,
+				.name = strdup(name->as.string),
+				.as.value = val,
+			};
+			da_append(variables, var);
+			i += 2;
+		} break;
+
+		case TOK_VARIABLE: {
+			Token *name = &tokens->items[i + 1];
+			Variable var = {
+				.type = VAR_VARIABLE,
+				.name = strdup(name->as.string),
+				.as.value = 0,
+			};
+			da_append(variables, var);
+			i += 2;
+		} break;
+
+		case TOK_VAR_GET: {
+			size_t addr = STACK_POP();
+			if (addr < variables->count) {
+				Variable *var = &variables->items[addr];
+				if (var->type == VAR_VARIABLE) {
+					STACK_PUSH(var->as.value);
+				}
+			}
+			i++;
+		} break;
+
+		case TOK_VAR_WRITE: {
+			size_t addr = STACK_POP();
+			int val = STACK_POP();
+			if (addr < variables->count) {
+				Variable *var = &variables->items[addr];
+				switch (var->type) {
+				case VAR_VARIABLE: var->as.value = val; break;
+				case VAR_ARRAY: assert(0 && "Not implemented"); break;
+				default: break;
+				}
+			}
+			i++;
+		} break;
+
+		case TOK_VAR_ADD: {
+			size_t addr = STACK_POP();
+			int val = STACK_POP();
+			if (addr < variables->count) {
+				Variable *var = &variables->items[addr];
+				switch (var->type) {
+				case VAR_VARIABLE: var->as.value += val; break;
+				case VAR_ARRAY: assert(0 && "Not implemented"); break;
+				default: break;
+				}
+			}
+			i++;
+		} break;
+
+		case TOK_CELLS: {
+			// TODO: Cells is ignored
+			i++;
+		} break;
+
+		case TOK_ALLOT: {
+			i++;
+		} break;
+
 		default: {
-			printf("\nTODO: implement %s\n", token_string[tok->type]);
+			printf("\nUnknown token: %s (%d)\n", token_string[tok->type], tok->type);
 			assert(0);
 		} break;
 

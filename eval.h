@@ -12,6 +12,20 @@ typedef struct {
 } Words;
 
 int eval(Tokens *tokens, Words *words);
+typedef struct {
+	VariableType type;
+	char *name;
+	union {
+		int value;
+	} as;
+} Variable;
+
+typedef struct {
+	Variable *items;
+	size_t count, capacity;
+} Variables;
+
+int eval(Tokens *tokens, Words *words, Variables *variables);
 
 #endif // EVAL_H_
 
