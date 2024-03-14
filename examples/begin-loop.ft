@@ -3,6 +3,8 @@
 	begin
 		dup . ."  "
 		1 - dup 0 =
-	until drop ;
+	until
+	drop ;
 
-10 countdown cr \ expect: 10 9 8 7 6 5 4 3 2 1
+10 countdown cr
+\ expect: 10 9 8 7 6 5 4 3 2 1
