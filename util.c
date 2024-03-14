@@ -1,16 +1,42 @@
 #include <assert.h>
-#include <ctype.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "lexer.h"
 #include "util.h"
 
-void to_lower(char *str) {
-	for ( ; *str; ++str)
-		*str = tolower(*str);
+char *read_file(const char *path) {
+	FILE *fp = fopen(path, "r");
+	if (fp == NULL) return NULL;
+	if (fseek(fp, 0, SEEK_END) < 0) goto error;
+	size_t file_size = ftell(fp);
+	if (fseek(fp, 0, SEEK_SET) < 0) goto error;
+	char *file_contents = malloc(sizeof(file_contents) * file_size);
+	if (file_contents == NULL) goto error;
+	fread(file_contents, sizeof(file_contents), file_size, fp);
+	file_contents[file_size] = '\0';
+	fclose(fp);
+	return file_contents;
+
+error:
+	fclose(fp);
+	return NULL;
+}
+
+int iswhitespace(char c) {
+	return c == ' ' || c== '\n' || c == '\t' || c == '\r';
+}
+
+int isnumber(char c) {
+	return c >= '0' && c <= '9';
+}
+
+void to_lower(char *s) {
+	for (size_t i = 0; i < strlen(s); i++) {
+		if (s[i] >= 'A' && s[i] <= 'Z') {
+			s[i] += ('a' - 'A');
+		}
+	}
 }
 
 char *shift_args(int *argc, char ***argv) {
@@ -19,56 +45,4 @@ char *shift_args(int *argc, char ***argv) {
     (*argv) += 1;
     (*argc) -= 1;
     return result;
-	assert(*argc > 0);
-}
-
-void dump_tokens(Tokens *tokens) {
-	fprintf(stderr, "%-7s %-15s %-20s %-8s %-8s %-8s\n",
-		"Index #", "Token Type", "Value", "Start", "Middle", "End");
-	for (size_t i = 0; i < tokens->count; i++) {
-		Token *tok = &tokens->items[i];
-		fprintf(stderr, "%-7zu %-15s ", i, token_string[tok->type]);
-		switch (tok->type) {
-		case TOK_NUMBER:
-			fprintf(stderr, "%-20d ", tok->as.number);
-			break;
-		case TOK_COLON:
-			fprintf(stderr, "%-20s %-8zu %-8s %-8zu",
-				" ", tok->as.scope.start, " ", tok->as.scope.end);
-			break;
-		case TOK_SEMICOLON:
-			fprintf(stderr, "%-20s %-8zu",
-				" ", tok->as.scope.start);
-			break;
-		case TOK_BEGIN:
-		case TOK_DO:
-			fprintf(stderr, "%-20s %-8s %-8s %-8zu",
-				" ", " ", " ", tok->as.scope.end);
-			break;
-		case TOK_UNTIL:
-		case TOK_LOOP:
-			fprintf(stderr, "%-20s %-8zu ",
-				" ", tok->as.scope.start);
-			break;
-		case TOK_ITERATOR:
-		case TOK_IF:
-			fprintf(stderr, "%-20s %-8zu %-8zu %-8zu ",
-				" ", tok->as.scope.start, tok->as.scope.middle, tok->as.scope.end);
-			break;
-		case TOK_ELSE:
-			fprintf(stderr, "%-20s %-8zu %-8s %-8zu ",
-				" " , tok->as.scope.start, " ", tok->as.scope.end);
-			break;
-		case TOK_THEN:
-			fprintf(stderr, "%-20s %-8zu %-8s %-8s ",
-				" ", tok->as.scope.start, " ", " ");
-			break;
-		case TOK_WORD:
-		case TOK_STRING:
-			fprintf(stderr, "%-20s ", tok->as.string);
-			break;
-		default: break;
-		}
-		fprintf(stderr, "\n");
-	}
 }

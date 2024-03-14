@@ -1,147 +1,146 @@
-#include <stdbool.h>
 #include <stdio.h>
 
-#include "lexer.h"
-#include "stack.h"
+#include "forth.h"
 #include "util.h"
 #include "stack.h"
-#include "builtins.h"
 
-int builtin_dot(void) {
-	printf("%d", STACK_POP());
+int builtin_dot(Forth *f) {
+	cell a = stack_pop(f);
+	printf("%d", a);
 	return 0;
 }
 
-int builtin_cr(void) {
+int builtin_cr(Forth *f) {
+	(void)f;
 	putchar('\n');
 	return 0;
 }
 
-int builtin_dup(void) {
-	int a = STACK_POP();
-	STACK_PUSH(a);
-	STACK_PUSH(a);
+int builtin_dup(Forth *f) {
+	cell a = stack_pop(f);
+	stack_push(f, a);
+	stack_push(f, a);
 	return 0;
 }
 
-int builtin_swap(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(a);
-	STACK_PUSH(b);
+int builtin_swap(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, a);
+	stack_push(f, b);
 	return 0;
 }
 
-int builtin_over(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(b);
-	STACK_PUSH(a);
-	STACK_PUSH(b);
+int builtin_over(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, b);
+	stack_push(f, a);
+	stack_push(f, b);
 	return 0;
 }
 
-int builtin_rot(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	int c = STACK_POP();
-	STACK_PUSH(b);
-	STACK_PUSH(a);
-	STACK_PUSH(c);
+int builtin_rot(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	cell c = stack_pop(f);
+	stack_push(f, b);
+	stack_push(f, a);
+	stack_push(f, c);
 	return 0;
 }
 
-int builtin_emit(void) {
-	int a = STACK_POP();
+int builtin_emit(Forth *f) {
+	cell a = stack_pop(f);
 	printf("%c", a);
 	return 0;
 }
 
-int builtin_mod(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(b % a);
+int builtin_mod(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, b % a);
 	return 0;
 }
 
-int builtin_and(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(b & a);
+int builtin_and(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, b & a);
 	return 0;
 }
 
-int builtin_or(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(b | a);
+int builtin_or(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, b | a);
 	return 0;
 }
 
-int builtin_invert(void) {
-	int a = STACK_POP();
-	STACK_PUSH(~a);
+int builtin_invert(Forth *f) {
+	cell a = stack_pop(f);
+	stack_push(f, ~a);
 	return 0;
 }
 
-int builtin_drop(void) {
-	STACK[SP--] = 0;
+int builtin_drop(Forth *f) {
+	(void)stack_pop(f);
 	return 0;
 }
 
-int builtin_add(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(a + b);
+int builtin_add(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, a + b);
 	return 0;
 }
 
-int builtin_sub(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(b - a);
+int builtin_sub(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, b - a);
 	return 0;
 }
 
-int builtin_mul(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(b * a);
+int builtin_mul(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, b * a);
 	return 0;
 }
 
-int builtin_div(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(b / a);
+int builtin_div(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, b / a);
 	return 0;
 }
 
-int builtin_equals(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(TRUTHY(b == a));
+int builtin_equals(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, TRUTHY(b == a));
 	return 0;
 }
 
-int builtin_less(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(TRUTHY(b < a));
+int builtin_less(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, TRUTHY(b < a));
 	return 0;
 }
 
-int builtin_greater(void) {
-	int a = STACK_POP();
-	int b = STACK_POP();
-	STACK_PUSH(TRUTHY(b > a));
+int builtin_greater(Forth *f) {
+	cell a = stack_pop(f);
+	cell b = stack_pop(f);
+	stack_push(f, TRUTHY(b > a));
 	return 0;
 }
 
-int builtin_stacktrace(void) {
-	putchar('\t');
-	for (int s = 0; s < SP; s++) {
-		printf("%d ", STACK[s]);
+int builtin_stacktrace(Forth *f) {
+	printf("  ");
+	for (cell s = 0; s < (*f->sp); s++) {
+		printf("%d ", (cell)f->stack[s]);
 	}
 	printf("<- Top");
 	return 0;

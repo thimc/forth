@@ -1,31 +1,26 @@
-#ifndef BUILTINS_H_
-#define BUILTINS_H_
+#ifndef BUILTINS_H
+#define BUILTINS_H
 
-int builtin_dot(void);
-int builtin_cr(void);
-int builtin_dup(void);
-int builtin_swap(void);
-int builtin_over(void);
-int builtin_rot(void);
-int builtin_emit(void);
-int builtin_mod(void);
-int builtin_and(void);
-int builtin_or(void);
-int builtin_invert(void);
-int builtin_drop(void);
-int builtin_add(void);
-int builtin_sub(void);
-int builtin_mul(void);
-int builtin_div(void);
-int builtin_equals(void);
-int builtin_less(void);
-int builtin_greater(void);
-int builtin_stacktrace(void);
-
-typedef struct {
-	const char *name;
-	int (*fn)(void);
-} Builtin;
+int builtin_dot(Forth *f);
+int builtin_cr(Forth *f);
+int builtin_dup(Forth *f);
+int builtin_swap(Forth *f);
+int builtin_over(Forth *f);
+int builtin_rot(Forth *f);
+int builtin_emit(Forth *f);
+int builtin_mod(Forth *f);
+int builtin_and(Forth *f);
+int builtin_or(Forth *f);
+int builtin_invert(Forth *f);
+int builtin_drop(Forth *f);
+int builtin_add(Forth *f);
+int builtin_sub(Forth *f);
+int builtin_mul(Forth *f);
+int builtin_div(Forth *f);
+int builtin_equals(Forth *f);
+int builtin_less(Forth *f);
+int builtin_greater(Forth *f);
+int builtin_stacktrace(Forth *f);
 
 static const Builtin builtins[] = {
 	{ .name = ".",      .fn = builtin_dot },
@@ -49,7 +44,9 @@ static const Builtin builtins[] = {
 	{ .name = "<",      .fn = builtin_less },
 	{ .name = ">",      .fn = builtin_greater },
 
+	// Debug words
 	{ .name = ".s",     .fn = builtin_stacktrace },
 };
 
-#endif // BUILTINS_H_
+
+#endif // !BUILTINS_H

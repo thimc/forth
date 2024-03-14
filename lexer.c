@@ -1,27 +1,72 @@
 #include <assert.h>
-#include <ctype.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
-#include "lexer.h"
+#include "forth.h"
 #include "util.h"
+#include "lexer.h"
 
-int lex(char *src, Tokens *tokens) {
-	size_t src_len = strlen(src);
+void forth_lexer_error(char *src, const char *fname, Token *token, const char *fmt, ...) {
+    va_list ap;
+	char location[64] = {0};
+	char *src_line = NULL;
+	int line = 0, column = 0;
 	size_t i = 0;
+	size_t src_len = strlen(src);
+	size_t line_start = 0;
 
 	while (i < src_len) {
-		while (i < src_len && isspace(src[i])) i++;
-		if (i >= src_len) break;
+		column++;
+		if (src[i] == '\n') {
+			line_start = i + 1;
+			line++;
+			column = 1;
+		}
+		if (i == token->location) {
+			while (src[i] != '\0' && src[i] != '\n') i++;
+			break;
+		}
+		i++;
+	}
+	assert(line_start < i);
 
-		switch (src[i]) {
+	src_line = (char*)malloc(i - line_start + 1);
+	assert(src_line != NULL);
+	memcpy(src_line, src + line_start, i - line_start);
+	src_line[i - line_start] = '\0';
+
+    /* FIXME: To get the "^near  here" marker point some what correctly
+     * we need to replace the tabs so that the width of all symbols
+     * are the same. */
+	for (size_t n = 0; n < strlen(src_line); n++)
+		if (src_line[n] == '\t') src_line[n] = ' ';
+
+    va_start(ap, fmt);
+	snprintf(location, ARRAY_LEN(location), "%s:%d:%d: ERROR: ", fname, line, column);
+	fputs(location, stderr);
+	vfprintf(stderr, fmt, ap);
+	printf("\n%s\n", src_line);
+	int offset = strlen(src_line) - 1;
+    printf("%*s^ near here\n", offset, " ");
+    va_end(ap);
+    free(src_line);
+}
+
+int forth_lex(Forth *f) {
+	size_t source_code_len = strlen(f->source_code);
+	size_t i = 0;
+
+	while (i < source_code_len) {
+		while (i < source_code_len && iswhitespace(f->source_code[i])) i++;
+		if (i >= source_code_len) break;
+		switch (f->source_code[i]) {
 
 		case '(': {
 			size_t start = i;
-			while (src[i++] != ')') {
-				if (i >= src_len) {
+			while (f->source_code[i++] != ')') {
+				if (i >= source_code_len) {
 					printf("ERROR: expected end of comment block that starts at index %zu, got EOF\n", start);
 					return 1;
 				}
@@ -31,9 +76,9 @@ int lex(char *src, Tokens *tokens) {
 
 		case '\\': {
 			size_t start = i;
-			while (src[i] != '\n') {
-				if (i >= src_len) {
-					printf("ERROR: expected end of comment line that starts at index %zu, got EOF\n", start);
+			while (f->source_code[i] != '\n') {
+				if (i >= source_code_len) {
+					printf("ERROR: expected end of comment that starts at index %zu, got EOF\n", start);
 					return 1;
 				}
 				i++;
@@ -45,7 +90,7 @@ int lex(char *src, Tokens *tokens) {
 				.type = TOK_COLON,
 				.location = i,
 			};
-			da_append(tokens, tok);
+			da_append(&f->tokens, tok);
 			i++;
 		} break;
 
@@ -54,39 +99,42 @@ int lex(char *src, Tokens *tokens) {
 				.type = TOK_SEMICOLON,
 				.location = i,
 			};
-			da_append(tokens, tok);
+			da_append(&f->tokens, tok);
 			i++;
 		} break;
 
 		case '@': {
 			Token tok = {
-				.type = TOK_VAR_GET,
+				.type = TOK_READ,
 				.location = i,
 			};
-			da_append(tokens, tok);
+			da_append(&f->tokens, tok);
 			i++;
 		} break;
 
 		case '!': {
 			Token tok = {
-				.type = TOK_VAR_WRITE,
+				.type = TOK_WRITE,
 				.location = i,
 			};
-			da_append(tokens, tok);
+			da_append(&f->tokens, tok);
 			i++;
 		} break;
 
 		case '.': {
-			if (src[i+1] == '\"') {
+			if (f->source_code[i+1] == '\"') {
 				i++; // consume .
 				i++; // consume "
 				i++; // consume <space>
-				if (i >= src_len) {
-					printf("ERROR: expected literal string, got EOF at index %zu\n", i);
-					return 1;
-				}
 				size_t start = i;
-				while (src[i] != '\"') i++;
+				while (f->source_code[i] != '\"') {
+					if (i >= source_code_len) {
+						/* forth_lexer_error(f->source_code, f->file_name, &f->tokens.items[start], "Expected end of string literal"); */
+						printf("ERROR: expected literal string, got EOF at index %zu\n", i);
+						return 1;
+					}
+					i++;
+				}
 				size_t end = i - 1;
 				i++; // consume "
 				Token tok = {
@@ -95,43 +143,44 @@ int lex(char *src, Tokens *tokens) {
 				};
 				tok.as.string = malloc(sizeof(tok.as.string) * end - start + 1);
 				assert(tok.as.string != NULL);
-				memcpy(tok.as.string, src+start, end - start + 1);
+				memcpy(tok.as.string, f->source_code+start, end - start + 1);
 				tok.as.string[end - start + 1] = '\0';
-				da_append(tokens, tok);
+				da_append(&f->tokens, tok);
 				continue;
 			}
 		};
+		// fall through
 
 		default:
-			if (src[i] == 'i' && isspace(src[i + 1])) {
+			if (f->source_code[i] == 'i' && iswhitespace(f->source_code[i + 1])) {
 				Token tok = {
 					.type = TOK_ITERATOR,
 					.location = i,
 				};
-				da_append(tokens, tok);
+				da_append(&f->tokens, tok);
 				i++;
 				break;
 			}
 
-			if ((src[i] == '-' && isdigit(src[i+1])) || isdigit(src[i])) {
-				char negate = (src[i] == '-');
+			if ((f->source_code[i] == '-' && isnumber(f->source_code[i+1])) || isnumber(f->source_code[i])) {
+				char negate = (f->source_code[i] == '-');
 				if (negate) i++;
 				size_t start = i;
-				while (isdigit(src[i])) {
-					if (i >= src_len) break;
+				while (isnumber(f->source_code[i])) {
+					if (i >= source_code_len) break;
 					i++;
 				}
 				size_t end = i;
-				char buffer[end - start];
+				char buffer[end - start + 1];
 				assert(end > start);
-				memcpy(buffer, src + start, end - start);
+				memcpy(buffer, f->source_code + start, end - start);
 				buffer[end-start] = '\0';
 				Token tok = {
 					.type = TOK_NUMBER,
 					.location = i,
 					.as.number = atoi(buffer),
 				};
-				da_append(tokens, tok);
+				da_append(&f->tokens, tok);
 				break;
 			}
 
@@ -141,15 +190,15 @@ int lex(char *src, Tokens *tokens) {
 			};
 
 			size_t start = i;
-			while (!isspace(src[i])) {
-				if (i >= src_len) break;
+			while (!iswhitespace(f->source_code[i])) {
+				if (i >= source_code_len) break;
 				i++;
 			}
 			size_t end = i;
 			if (end-start < 1) break;
 			tok.as.string = malloc(sizeof(tok.as.string) * end - start + 1);
 			assert(tok.as.string != NULL);
-			memcpy(tok.as.string, src + start, end - start);
+			memcpy(tok.as.string, f->source_code + start, end - start);
 			tok.as.string[end - start] = '\0';
 			to_lower(tok.as.string);
 
@@ -159,13 +208,24 @@ int lex(char *src, Tokens *tokens) {
 					break;
 				}
 			}
-
-			if (strcmp(tok.as.string, "+!") == 0) tok.type = TOK_VAR_ADD;
-
-			da_append(tokens, tok);
+			if (strcmp(tok.as.string, "+!") == 0) tok.type = TOK_ADD;
+			da_append(&f->tokens, tok);
 			break;
 		}
-	}
 
+	}
 	return 0;
+}
+
+int forth_parser_eof(Forth *f) {
+	return f->i >= f->tokens.count;
+}
+
+Token *forth_current_token(Forth *f) {
+	return &f->tokens.items[f->i];
+}
+
+Token *forth_peek_token(Forth *f) {
+	if (forth_parser_eof(f)) return NULL;
+	return &f->tokens.items[f->i + 1];
 }

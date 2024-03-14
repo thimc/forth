@@ -1,59 +1,56 @@
 #include <assert.h>
-#include <ctype.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "lexer.h"
-#include "stack.h"
+#include "forth.h"
 #include "util.h"
-#include "eval.h"
+#include "stack.h"
 #include "builtins.h"
+#include "eval.h"
 
-int eval(Tokens *tokens, Words *words, Variables *variables) {
+int forth_eval(Forth *f) {
 	size_t i = 0;
 
-	while (i < tokens->count) {
-		Token *tok = &tokens->items[i];
-
+	while (i < f->tokens.count) {
+		Token *tok = &f->tokens.items[i];
 		switch (tok->type) {
+
 		case TOK_WORD: {
 			char matched = 0;
 			for (size_t n = 0; n < ARRAY_LEN(builtins); n++) {
 				if (strcmp(builtins[n].name, tok->as.string) == 0) {
-					if (builtins[n].fn()) return 1;
+					if (builtins[n].fn(f)) return 1;
 					matched = 1;
 					i++;
 					break;
 				}
 			}
 			if (!matched) {
-				for (size_t n = 0; n < words->count; n++) {
-					if (strcmp(words->items[n].name, tok->as.string) == 0) {
-						CALL_STACK_PUSH(++i);
-						i = words->items[n].start + 2;
+				for (size_t n = 0; n < f->words.count; n++) {
+					if (strcmp(f->words.items[n].name, tok->as.string) == 0) {
+						i++;
+						cstack_push(f, (cell)i);
+						i = f->words.items[n].start + 2;
 						matched = 1;
 						break;
 					}
 				}
 			}
 			if (!matched) {
-				for (size_t n = 0; n < variables->count; n++) {
-					if (strcmp(variables->items[n].name, tok->as.string) == 0) {
-						Variable *var = &variables->items[n];
-						if (var->type == VAR_CONSTANT) {
-							STACK_PUSH(var->as.value);
-						} else if (var->type == VAR_VARIABLE) {
-							STACK_PUSH(n);
+				for (size_t n = 0; n < f->variables.count; n++) {
+					if (strcmp(f->variables.items[n].name, tok->as.string) == 0) {
+						if (f->variables.items[n].type == VAR_CONSTANT)
+							stack_push(f, *f->variables.items[n].address);
+						else {
+							stack_push(f, (f->variables.items[n].address - f->varstack));
 						}
+						i++;
+						matched = 1;
+						break;
 					}
-					matched = 1;
-					i++;
-					break;
 				}
 			}
-
 			if (!matched) {
 				printf("Unknown word: '%s' at index %zu\n", tok->as.string, i);
 				return 1;
@@ -61,7 +58,7 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 		} break;
 
 		case TOK_NUMBER: {
-			STACK_PUSH(tok->as.number);
+			stack_push(f, tok->as.number);
 			i++;
 		} break;
 
@@ -73,17 +70,17 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 		case TOK_COLON: {
 			i++;
 			Word word = {
-				.name = strdup(tokens->items[i].as.string),
+				.name = strdup(f->tokens.items[i].as.string),
 				.start = tok->as.scope.start,
 				.end = tok->as.scope.end,
 			};
-			da_append(words, word);
-			CALL_STACK_PUSH(word.end + 1);
+			da_append(&f->words, word);
+			cstack_push(f, word.end + 1);
 			i = word.end;
 		} break;
 
 		case TOK_IF: {
-			if (STACK_POP()) {
+			if (stack_pop(f)) {
 				i++;
 			} else {
 				if (tok->as.scope.middle) {
@@ -93,19 +90,19 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 					continue;
 				}
 			}
-			CALL_STACK_PUSH(tok->as.scope.end + 1);
+			cstack_push(f, tok->as.scope.end + 1);
 		} break;
 
 		case TOK_SEMICOLON:
 		case TOK_ELSE:
 		case TOK_THEN: {
-			i = CALL_STACK_POP();
-			if (i >= tokens->count) break;
+			i = cstack_pop(f);
+			if (i + 1>= f->tokens.count) break;
 		} break;
 
 		case TOK_DO: {
-			tok->as.scope.start = STACK_POP();
-			tok->as.scope.middle = STACK_POP();
+			tok->as.scope.start = stack_pop(f);
+			tok->as.scope.middle = stack_pop(f);
 			if (tok->as.scope.start > tok->as.scope.middle) {
 				i = tok->as.scope.end + 1;
 				continue;
@@ -114,12 +111,12 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 		} break;
 
 		case TOK_ITERATOR: {
-			STACK_PUSH(tokens->items[tok->as.scope.start].as.scope.start);
+			stack_push(f, (cell)f->tokens.items[tok->as.scope.start].as.scope.start);
 			i++;
 		} break;
 
 		case TOK_LOOP: {
-			Token *if_token = &tokens->items[tok->as.scope.start];
+			Token *if_token = &f->tokens.items[tok->as.scope.start];
 			if_token->as.scope.start++;
 			if (if_token->as.scope.start < if_token->as.scope.middle) {
 				i = tok->as.scope.start + 1;
@@ -133,91 +130,77 @@ int eval(Tokens *tokens, Words *words, Variables *variables) {
 		} break;
 
 		case TOK_UNTIL: {
-			STACK_POP();
-			int val = STACK_POP();
+			stack_pop(f);
+			cell val = stack_pop(f);
+			stack_push(f, val);
 			if (TRUTHY(val) == TRUE) {
-				STACK_PUSH(val);
 				i = tok->as.scope.start;
-			} else {
-				i++;
+				continue;
 			}
+			i++;
 		} break;
 
 		case TOK_CONSTANT: {
-			int val = STACK_POP();
-			Token *name = &tokens->items[i + 1];
+			cell val = stack_pop(f);
+			Token *name = &f->tokens.items[i + 1];
 			Variable var = {
 				.type = VAR_CONSTANT,
 				.name = strdup(name->as.string),
-				.as.value = val,
+				.address = &val,
 			};
-			da_append(variables, var);
+			da_append(&f->variables, var);
 			i += 2;
 		} break;
 
 		case TOK_VARIABLE: {
-			Token *name = &tokens->items[i + 1];
+			Token *name = &f->tokens.items[i + 1];
 			Variable var = {
 				.type = VAR_VARIABLE,
 				.name = strdup(name->as.string),
-				.as.value = 0,
+				.address = f->vp++,
 			};
-			da_append(variables, var);
+			da_append(&f->variables, var);
 			i += 2;
 		} break;
 
-		case TOK_VAR_GET: {
-			size_t addr = STACK_POP();
-			if (addr < variables->count) {
-				Variable *var = &variables->items[addr];
-				if (var->type == VAR_VARIABLE) {
-					STACK_PUSH(var->as.value);
-				}
-			}
+		case TOK_READ: {
+			cell addr = stack_pop(f);
+			stack_push(f, f->varstack[addr]);
 			i++;
 		} break;
 
-		case TOK_VAR_WRITE: {
-			size_t addr = STACK_POP();
-			int val = STACK_POP();
-			if (addr < variables->count) {
-				Variable *var = &variables->items[addr];
-				switch (var->type) {
-				case VAR_VARIABLE: var->as.value = val; break;
-				default: break;
-				}
-			}
+		case TOK_WRITE: {
+			cell addr = stack_pop(f);
+			cell val = stack_pop(f);
+			f->varstack[addr] = val;
 			i++;
 		} break;
 
-		case TOK_VAR_ADD: {
-			size_t addr = STACK_POP();
-			int val = STACK_POP();
-			if (addr < variables->count) {
-				Variable *var = &variables->items[addr];
-				switch (var->type) {
-				case VAR_VARIABLE: var->as.value += val; break;
-				default: break;
-				}
-			}
+		case TOK_ADD: {
+			cell addr = stack_pop(f);
+			cell val = stack_pop(f);
+			f->varstack[addr] += val;
 			i++;
 		} break;
 
 		case TOK_CELLS: {
+			// ignored
 			i++;
 		} break;
 
 		case TOK_ALLOT: {
+			cell a = stack_pop(f);
+			f->vp += a;
 			i++;
 		} break;
 
 		default: {
-			printf("\nUnknown token: %s (%d)\n", token_string[tok->type], tok->type);
-			assert(0);
+			assert(0 && "Unreachable");
 		} break;
 
 		}
-	}
 
+	}
 	return 0;
 }
+

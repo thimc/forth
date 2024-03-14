@@ -1,18 +1,6 @@
-// vim: ft=c
-#ifndef PARSER_H_
-#define PARSER_H_
+#ifndef PARSER_H
+#define PARSER_H
 
-typedef struct {
-	const char *fname;
-	char *src;
-	Tokens *tokens;
-	size_t i;
-} Parser;
+int forth_parse(Forth *f);
 
-Token *current_token(Parser *parser);
-Token *peek_token(Parser *parser);
-int parser_eof(Parser *parser);
-void error(char *src, const char *fname, Token *token, const char *fmt, ...);
-int parse(Parser *parser);
-
-#endif // PARSER_H_
+#endif // !PARSER_H

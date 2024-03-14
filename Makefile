@@ -1,16 +1,16 @@
-CC = cc
-CFLAGS = -std=c99 -Wall -Wextra -pedantic -pedantic-errors -ggdb -I. -Wshadow
+CFLAGS = -std=c99 -Wall -Wextra -pedantic -ggdb -I. -Wshadow
 
-SRCS = builtins.c eval.c parser.c lexer.c util.c forth.c
-OBJS = ${SRCS:.c=.o}
+SRCS = util.c builtins.c stack.c lexer.c parser.c eval.c forth.c
+OBJS = $(SRCS:.c=.o)
 TARGET = forth
 
-${TARGET}: ${OBJS}
-	${CC} ${CFLAGS} ${OBJS} -o ${TARGET}
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
 
 .c.o:
-	${CC} ${CFLAGS} -c $<
+	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f ${OBJS} ${TARGET}
+	rm -f $(OBJS) $(TARGET)
 
+.PHONY: $(TARGET)

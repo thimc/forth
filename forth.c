@@ -1,96 +1,84 @@
 #include <assert.h>
-#include <ctype.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "util.h"
+#include "forth.h"
+#include "stack.h"
 #include "lexer.h"
 #include "parser.h"
-#include "stack.h"
-#include "util.h"
 #include "eval.h"
 
-Tokens tokens = {0};
-Words words = {0};
-Variables variables = {0};
-int STACK[STACK_SIZE] = {0};
-int SP = 0, CSP = 0;
+void forth_init(Forth *f, const char *file_name, char *source_code) {
+	f->stack = (cell*)(&f->memory[DATA_OFFSET + CELL_SIZE]);
+	f->cstack = (cell*)(&f->memory[CALLSTACK_OFFSET + CELL_SIZE]);
+	f->varstack = (cell*)(&f->memory[VARIABLES_OFFSET]);
+	f->sp = (cell*)(&f->memory[DATA_OFFSET]);
+	f->csp = (cell*)(&f->memory[CALLSTACK_OFFSET]);
+	f->vp = f->varstack;
+	f->file_name = file_name;
+	f->source_code = strdup(source_code);
+}
 
-int verbose = 0;
-
-void run(const char *file_name, char *source_code) {
-	if (lex(source_code, &tokens)) goto cleanup;
-	Parser parser = {
-		.fname = file_name,
-		.src = source_code,
-		.tokens = &tokens,
-	};
-	if (parse(&parser)) goto cleanup;
-	if (verbose) dump_tokens(&tokens);
-	if (eval(&tokens, &words, &variables)) goto cleanup;
-
-cleanup:
-	for (size_t i = 0; i < tokens.count; i++) {
-		if (tokens.items[i].type <= TOK_STRING) {
-			free(tokens.items[i].as.string);
+void forth_free(Forth *f) {
+	for (size_t i = 0; i < f->tokens.count; i++) {
+		if (f->tokens.items[i].type == TOK_STRING) {
+			free(f->tokens.items[i].as.string);
 		}
 	}
-	for (size_t i = 0; i < words.count; i++) {
-		free(words.items[i].name);
+	for (size_t i = 0; i < f->words.count; i++) {
+		free(f->words.items[i].name);
 	}
-	for (size_t i = 0; i < variables.count; i++) {
-		free(variables.items[i].name);
+	for (size_t i = 0; i < f->variables.count; i++) {
+		free(f->variables.items[i].name);
 	}
-	da_free(variables);
-	da_free(words);
-	da_free(tokens);
+	if (f->words.count) {
+		da_free(f->words);
+	}
+	if (f->tokens.count) {
+		da_free(f->tokens);
+	}
+	if (f->variables.count) {
+		da_free(f->variables);
+	}
+	free(f->source_code);
 }
 
-char *read_file(const char *path) {
-	FILE *fp = fopen(path, "r");
-	if (fp == NULL) return NULL;
-	if (fseek(fp, 0, SEEK_END) < 0) goto error;
-	size_t file_size = ftell(fp);
-	if (fseek(fp, 0, SEEK_SET) < 0) goto error;
-	char *file_contents = malloc(sizeof(file_contents) * file_size);
-	if (file_contents == NULL) goto error;
-	fread(file_contents, sizeof(file_contents), file_size, fp);
-	file_contents[file_size] = '\0';
-	fclose(fp);
-	return file_contents;
-
+int forth_run(Forth *f) {
+	if (forth_lex(f)) goto error;
+	if (forth_parse(f)) goto error;
+	if (forth_eval(f)) goto error;
+	return 0;
 error:
-	fclose(fp);
-	return NULL;
-}
-
-void usage(const char *program) {
-	fprintf(stderr, "usage: %s [-v] <file>\n", program);
-	exit(1);
+	return 1;
 }
 
 int main(int argc, char *argv[]) {
+	Forth forth = {0};
+
 	const char *program = shift_args(&argc, &argv);
-
-	if (argc < 1) usage(program);
-	const char *arg = shift_args(&argc, &argv);
-
-	if (strcmp(arg, "-vv") == 0) {
-		verbose = 2;
-		arg = shift_args(&argc, &argv);
-	} else if (strcmp(arg, "-v") == 0) {
-		verbose = 1;
-		arg = shift_args(&argc, &argv);
+	if (argc < 1) {
+		fprintf(stderr, "usage: %s [-v] <file>\n", program);
+		exit(1);
 	}
+	const char *file_name = shift_args(&argc, &argv);
 
-	char *source_code = read_file(arg);
+	char *source_code = read_file(file_name);
 	if (source_code == NULL) {
-		fprintf(stderr, "ERROR: could not read file: '%s'\n", arg);
-		return 1;
+		fprintf(stderr, "ERROR: could not read file: '%s'\n", file_name);
+		goto error;
 	}
-	run(arg, source_code);
+	forth_init(&forth, file_name, source_code);
+
+	if(forth_run(&forth)) {
+		fprintf(stderr, "ERROR: Execution failed\n");
+		goto error;
+	}
+
+error:
+	forth_free(&forth);
 	free(source_code);
 
 	return 0;
