@@ -2,8 +2,6 @@
 #define FORTH_H
 
 typedef int  cell;
-typedef long dcell;
-typedef char byte;
 
 #define CELL_SIZE (sizeof(cell))
 
@@ -92,7 +90,7 @@ typedef struct {
 } Variables;
 
 typedef struct {
-	byte memory[MEMORY_SIZE];
+	char memory[MEMORY_SIZE];
 	cell *cstack, *stack, *varstack;
 	cell *sp, *csp, *vp;
 	Tokens tokens;
