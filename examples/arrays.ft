@@ -1,0 +1,21 @@
+variable y
+9 cells allot
+
+: make-array-data ( max start -- )
+	over over do
+		i
+		dup 1 - ." Setting array index " . ."  to "
+		10 * dup . CR
+		y i 1 - cells + !
+	loop ;
+
+: read-array-data ( max start -- )
+	over over do
+		i 1 - dup ." Reading from array index " . ."  = "
+		y + @ . CR
+	loop ;
+
+10 1
+make-array-data
+read-array-data
+

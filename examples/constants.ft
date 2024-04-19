@@ -1,0 +1,7 @@
+\ Constants are variables that are read-only,
+\ unlike variables, constants will push its value
+\ directly on to the stack.
+
+33 constant x
+2 x * . CR
+\ expect 66

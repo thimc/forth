@@ -1,0 +1,10 @@
+\ Helper function that will get the variable at `addr`
+\ and print its value to standard output.
+: ? ( addr -- n )
+	@ . CR ;
+
+variable n
+25 n !
+44 n +!    \ +! is a builtin which will execute "44 n @ + n !" in this context
+n ?
+\ expect 69
